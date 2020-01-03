@@ -1,3 +1,4 @@
+
 import time
 import sys
 from graphviz import Digraph
@@ -8,11 +9,11 @@ class Automaton:
     """
     A Finite State Automaton (FSA), a di-graph with the following elements:
         - nodes (or states): can be initial or accepting or neither
-        - edges: arcs between nodes or a self-loop arc.
-        - each edge has a label
+        - edges: transitions between nodes or a self-loop edge.
+        - each edge has a label from some finite alphabet
 
-    Edges are represented by a matrix (list of lists), while each label is a list
-    itself (each element is an edge).
+    Edges are represented by a matrix (list of lists), where each label is a list
+    itself (each element is an transition rule).
 
     We rely on graphviz and Qt to draw an image of the FSA.
 
@@ -84,6 +85,11 @@ class Automaton:
             new_node    - Node object
         """
 
+        # Keep track track of the indices of the nodes to be merged, so we 
+        # don't try to merge the new node as well (e.g. when it's accepting node)
+        merge_indices = [n.index for n in nodes]
+        print(f'preparing to merge nodes: {merge_indices}') 
+
         # Create new Node object
         # If any of the old nodes is initial or accepting, inherit this property
         new_node = self.add_node(
@@ -92,22 +98,25 @@ class Automaton:
                         label=new_label
                         )
         new_i = new_node.index
-        merge_indices = [n.index for n in nodes]
+        print(f'created new node with index {new_i}')
         # Merge edges from nodes and delete
-        for i in range(self.node_index+1):
-            for j in range(self.node_index+1):
-                if self.edges[i][j] and (i in merge_indices or j in merge_indices):
+        for n1 in list(self.nodes):
+            for n2 in list(self.nodes):
+                if self.edges[n1.index][n2.index] and (n1.index in merge_indices or n2.index in merge_indices):
                     # Edge is selfloop or edge is between nodes to be merged
-                    if i == j or (i in merge_indices and j in merge_indices):
-                        self.add_edges(new_node, new_node, self.edges[i][j])
+                    if n1.index == n2.index or (n1.index in merge_indices and n2.index in merge_indices):
+                        print('<=>', self.edges[n1.index][n2.index])
+                        self.add_edges(new_node, new_node, self.edges[n1.index][n2.index])
                     # Edge is *from* nodes to be merged
-                    elif i in merge_indices:
-                        self.add_edges(new_node, self.nodes[j], self.edges[i][j])
+                    elif n1.index in merge_indices:
+                        print('<=', self.edges[n1.index][n2.index])
+                        self.add_edges(new_node, n2, self.edges[n1.index][n2.index])
                     # Edge is *to* nodes to be merged
-                    elif j in merge_indices:
-                        self.add_edges(self.nodes[i], new_node, self.edges[i][j])
+                    elif n2.index in merge_indices:
+                        print('=>', self.edges[n1.index][n2.index])
+                        self.add_edges(n1, new_node, self.edges[n1.index][n2.index])
                     # Delete old edge
-                    self.edges[i][j] = []
+                    self.edges[n1.index][n2.index] = []
 
         # Delete merged nodes
         for node in list(nodes):
@@ -152,44 +161,6 @@ class Automaton:
         new_edges = [[self.edges[i][j] if i <= self.node_index and j <= self.node_index else [] \
             for i in range(self.esize)] for j in range(self.esize)]
         self.edges = new_edges
-
-
-    def merge_outgoing_nd_edges(self):
-        is_non_deterministic = True
-        while is_non_deterministic:
-            print('Merging non-detreministic OUTGOING edges')
-            all_are_nd = []
-            for node in list(self.nodes):
-                is_nd, targets = node.find_nd_outgoing()
-                all_are_nd.append( is_nd )
-                if is_nd:
-                    print('ND NODE: ', node)
-                    for label in targets:
-                        if len(targets[label]) > 1:
-                            print(' ={}: [{}]'.format(label, ', '.join(n.label for n in targets[label])))
-                            self.merge_nodes( targets[label])
-            is_non_deterministic = any(all_are_nd)
-
-
-    def merge_incoming_nd_edges(self):
-        is_non_deterministic = True
-        while is_non_deterministic:
-            print('Merging non-detreministic INCOMING edges')
-            all_are_nd = []
-            for node in list(self.nodes):
-                nd, sources = node.find_nd_incoming()
-                all_are_nd.append(nd)
-                if nd:
-                    print('ND NODE: ', node)
-                    for label in sources:
-                        if len(sources[label]) > 1:
-                            print(' ={}: [{}]'.format(label, ', '.join(n.label for n in sources[label])))
-                            self.merge_nodes( sources[label])
-            is_non_deterministic = any(all_are_nd)
-
-    def merge_final_states(self, new_label=''):
-        self.merge_nodes( self.final_states() )
-
 
 
     def show(self, title='Finite State Automaton'):
@@ -324,20 +295,17 @@ class Edge:
 
 
 if __name__ == '__main__':
-    DFA = Automaton()
-    n0 = DFA.add_node()
-    n1 = DFA.add_node()
-    n2 = DFA.add_node(is_final=True)
-    n3 = DFA.add_node(is_final=True)
-    DFA.add_edge( DFA.root, n1, '0')
-    DFA.add_edge( n1, n2, '0')
-    DFA.add_edge( n1, n3, '1')
-    DFA.add_edge( n3, n3, '2')
-    print('Generated prefix tree')
-    DFA.show(title='Prefix Tree')
-    DFA.merge_nodes([n2, n3])
-    DFA.show()
-    print('Merged n2 and n3')
-    #DFA.merge_nodes(DFA.final_states, are_final=True)
-    print('Merged final states')
-   # DFA.show(title='Merged final states')
+    A = Automaton()
+    n0 = A.add_node()
+    n1 = A.add_node()
+    n2 = A.add_node(is_final=True)
+    n3 = A.add_node(is_final=True)
+    A.add_edge( A.root, n1, '0')
+    A.add_edge( n1, n2, '0')
+    A.add_edge( n1, n3, '1')
+    A.add_edge( n3, n3, '2')
+    print('Generated example Automaton')
+    A.show(title='Example Automaton')
+    A.merge_nodes([n2, n3])
+    print('Merged nodes n2 and n3')
+    A.show(title='Merged n2 and n3')
