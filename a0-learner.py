@@ -1,5 +1,6 @@
 
 from automaton import Automaton, Node
+from re_parser import RegExParser
 
 class A0Learner:
     """
@@ -24,7 +25,8 @@ class A0Learner:
         """
         self.A = automaton if automaton else Automaton()
         self.S = sorted( set(examples) )
-        self.Σ = {char for s in self.S for char in s}
+        self.Σ = { char for s in self.S for char in s }
+        # If empty string is accepted, make root accepting state
         self.root = self.A.add_node(
                 is_initial=True, 
                 is_final=True if self.S[0] == '' else False 
@@ -166,4 +168,9 @@ if __name__ == '__main__':
     S = ['', 'ab', 'aab', 'aaaab']
     A = Automaton()
     L = A0Learner(S, A)
-    L.learn(verbose=True)
+    L.learn(verbose=False)
+
+    A = L.get_automaton()
+    A.show('zero-reversible automaton')
+
+

@@ -223,75 +223,9 @@ class Node:
         self.label = label
         self.is_initial = is_initial
         self.is_final = is_final
-        self.edges = []
-
-    def add_edge(self, edge):
-        self.edges.append(edge)
-
-    def has_edge_from(self, source, label):
-        for edge in self.edges:
-            if edge.source is source and edge.label==label:
-                return True
-        return False
-
-    def has_edge_to(self, target, label):
-        for edge in self.edges:
-            if edge.target is target and edge.label==label:
-                return True
-        return False
-
-    def has_selfloop(self, label):
-        for edge in self.edges:
-            if edge.is_selfloop and edge.label == label:
-                return True
-        return False
-
-    def find_nd_outgoing(self):
-        """
-        Finds all outgoing edges and sorts by edge label.
-        If same label points to more than one neighbor, node is non-deterministic, 
-        Returns: bool, dict
-        """
-        edges_by_label = {}     
-        for edge in self.edges:
-            if edge.source is self and not edge.is_selfloop:
-                if edge.label not in edges_by_label:
-                    edges_by_label[edge.label] = []
-                edges_by_label[edge.label].append(edge.target)
-        is_nd = any([True if len(targets)>1 else False for targets in edges_by_label.values()])
-        return is_nd, edges_by_label
-
-
-    def find_nd_incoming(self):
-        edges_by_label = {}     
-        for edge in self.edges:
-            if edge.target is self and not edge.is_selfloop:
-                if edge.label not in edges_by_label:
-                    edges_by_label[edge.label] = []
-                edges_by_label[edge.label].append(edge.source)
-        is_nd = any([True if len(sources)>1 else False for sources in edges_by_label.values()])
-        return is_nd, edges_by_label
-
-
 
     def __str__(self):
-        return f'NODE: ("{self.name}"), S: {self.is_initial} F: {self.is_final} EDGES {len(self.edges)}'
-
-
-class Edge:
-    def __init__(self, n1, n2, label):
-        self.label = label
-        self.source = n1
-        self.target = n2
-        self.is_selfloop = True if n1 == n2 else False
-
-        # Add self to nodes
-        n1.add_edge(self)
-        if n1 != n2:
-            n2.add_edge(self)
-
-    def __str__(self):
-        return f'EDGE: ("{self.label}"), {self.source.name} ==> {self.target.name}'
+        return f'NODE: ("{self.index}"), Initial: {self.is_initial} Final: {self.is_final}'
 
 
 if __name__ == '__main__':
