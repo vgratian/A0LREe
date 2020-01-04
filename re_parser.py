@@ -1,6 +1,7 @@
 
+from nested_re import NestedRE
 
-class RegExParser():
+class REParser():
 
     """
     Extract a regular expression from a 0-reversible automaton. This is an
@@ -25,9 +26,10 @@ class RegExParser():
         """
 
         self.A = automaton
+        self.verbose = False
 
 
-    def parse_re(self, verbose=False):
+    def parse(self, verbose=False):
         """
         Apply State-Elimination to extract regular expression from the automaton.
 
@@ -37,39 +39,43 @@ class RegExParser():
             regex       - string
         """
 
+        self.verbose = verbose
 
         # Requirement of the SE algorithm, automaton should be uniform
         if not self.is_uniform():
-            print('Converting Automaton to uniform FSA')
+            print('Converting to uniform Automaton')
             self.make_uniform()
-
+            if verbose:
+                self.A.show('Uniform 0-Automaton')
+        
         # List nodes to be eliminated, ignore initial and final states
         nodes = [n for n in self.A.nodes if not (n.is_initial or n.is_final) ]
 
-        final_edge = None
-
-        while nodes:          
+        i = 0
+        while nodes:    
             # Choose node to be eliminated
             k = nodes.pop(0)
             new_edges = [ [ [] for i in range(self.A.esize)] for j in range(self.A.esize)]
-
-            print('Eliminating: ', k)
+  
+            # DEBUG
+            i+=1
+            if verbose:
+                print(f'Loop={i}, N={len(nodes)}, Eliminatin k={k}')
+                self.A.show(f'i={i}')
 
             for n1 in list(self.A.nodes):
                 for n2 in list(self.A.nodes):
                     if not (n1==k or n2==k):
-                        new_label = self.merge_patterns(n1, n2, k)
+                        new_label = self.derive_pattern(n1, n2, k)
                         if new_label:
                             new_edges[n1.index][n2.index].append( new_label )
 
+            self.A.delete_node(k)
             self.A.edges = new_edges
 
-            if verbose:
-                self.A.show(title=f'RegExParser: eliminated {i} state(s)')
 
-            
         final_edge = self.A.edges[self.A.root.index][self.A.accepting_nodes[0].index]
-        
+
         return final_edge
 
 
@@ -124,39 +130,55 @@ class RegExParser():
             self.A.accepting_nodes = [ new_final ]
 
 
-    def merge_patterns(self, s, t, k):
+    def derive_pattern(self, s, t, k):
 
+        s2t = NestedRE( '|'.join(self.A.edges[s.index][t.index]) )
+        s2k = NestedRE( '|'.join(self.A.edges[s.index][k.index]) )
+        k2k = NestedRE( '|'.join(self.A.edges[k.index][k.index]), '*' )
+        k2t = NestedRE( '|'.join(self.A.edges[k.index][t.index]) )
 
-        s2t = ''.join(self.A.edges[s.index][t.index])
-        s2k = ''.join(self.A.edges[s.index][k.index])
-        k2k = ''.join(self.A.edges[k.index][k.index])
-        k2t = ''.join(self.A.edges[k.index][t.index])
+        if self.verbose:
+            print('-' * 40)
+            print(f'Deriving pattern for pair: [s={s.index}, t={t.index}, k={k.index}]')
+            print('s2t; ', s2t)
+            print('s2k; ', s2k)
+            print('k2k; ', k2k)
+            print('k2t; ', k2t)
+        
+        # Left-hand side of the pattern, which is just s2t or None if it's empty
+        L = s2t if s2t else None
 
-        right_pattern = ''
+        # Right-hand side of the pattern, take the intersection of the three patterns
+        R = None
         if s2k and k2t:
-            if s2k and s2k != 'ϵ':
-                right_pattern += s2k 
+            #if s2k and s2k != ['ϵ']:
+            #    right_pattern.append(s2k)
+            R = s2k
+            if self.verbose:
+                print('[R = s2k]: ', str(R))
 
-            if k2k and k2k != 'ϵ':
-                if len(k2k) == 1:
-                    right_pattern += k2k + '*'
-                else:
-                    right_pattern += '(' + k2k + ')*'
+            if k2k and str(k2k) != 'ϵ':
+                R = R.join_intersection(k2k)
+                if self.verbose:
+                    print('[R += k2k]: ', str(R))
 
-            if k2t and k2t != 'ϵ':
-                right_pattern += k2t
+            R = R.join_intersection(k2t)
+            if self.verbose:
+                print('[R += k2t]: ', str(R))
 
-            # Temporary fix if both s2k and k2t are 'ϵ'
-            if not right_pattern and not s2t and s2k=='ϵ' and k2t == 'ϵ':
-                right_pattern = 'ϵ'
+        # Full pattern, union of L and R
+        P = None
+        if L and R:
+            P = L.join_union(R)
+        elif L and not R:
+            P = L
+        elif R and not L:
+            P = R
 
-        if s2t and right_pattern:
-            return '(' + s2t + '|' + right_pattern + ')'
-        elif s2t and not right_pattern:
-            return s2t
-        elif right_pattern and not s2t:
-            return right_pattern
-        return None
+        if self.verbose:
+            print('[P=L|R]: ', P)
+            
+        return str(P) if P else None
 
 
     def get_automaton(self):

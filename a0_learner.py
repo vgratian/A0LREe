@@ -1,6 +1,6 @@
 
 from automaton import Automaton, Node
-from re_parser import RegExParser
+from re_parser import REParser
 
 class A0Learner:
     """
@@ -131,7 +131,7 @@ class A0Learner:
                 for char in self.Σ:
                     nd_children = []
                     for c in list(self.A.nodes):
-                        if c.index in self.A.deleted_indices or c.index == n.index:
+                        if c.index in self.A.deleted_indices:
                             continue
                         if char in self.A.edges[c.index][n.index]:
                             nd_children.append(c)
@@ -151,7 +151,7 @@ class A0Learner:
                 for char in self.Σ:
                     nd_parents = []
                     for p in list(self.A.nodes):
-                        if p.index in self.A.deleted_indices or p.index == n.index:
+                        if p.index in self.A.deleted_indices:
                             continue
                         if char in self.A.edges[p.index][n.index]:
                             nd_parents.append(p)
@@ -165,12 +165,16 @@ class A0Learner:
 
 
 if __name__ == '__main__':
-    S = ['', 'ab', 'aab', 'aaaab']
+    S = ['ab', 'aab', 'aaaab']
     A = Automaton()
     L = A0Learner(S, A)
-    L.learn(verbose=False)
+    L.learn(verbose=True)
 
     A = L.get_automaton()
-    A.show('zero-reversible automaton')
+    #A.show('zero-reversible automaton')
+    P = REParser(A)
+    e = P.parse(verbose=True)
+    print('Final Expression: ', '|'.join(e))
 
-
+    A = P.get_automaton()
+    A.show()
