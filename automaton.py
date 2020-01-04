@@ -1,6 +1,5 @@
-
-import time
 import sys
+import time
 from graphviz import Digraph
 from PyQt5 import QtGui, QtWidgets
 
@@ -88,7 +87,7 @@ class Automaton:
         # Keep track track of the indices of the nodes to be merged, so we 
         # don't try to merge the new node as well (e.g. when it's accepting node)
         merge_indices = [n.index for n in nodes]
-        print(f'preparing to merge nodes: {merge_indices}') 
+        #print(f'preparing to merge nodes: {merge_indices}') 
 
         # Create new Node object
         # If any of the old nodes is initial or accepting, inherit this property
@@ -98,22 +97,22 @@ class Automaton:
                         label=new_label
                         )
         new_i = new_node.index
-        print(f'created new node with index {new_i}')
+        #print(f'created new node with index {new_i}')
         # Merge edges from nodes and delete
         for n1 in list(self.nodes):
             for n2 in list(self.nodes):
                 if self.edges[n1.index][n2.index] and (n1.index in merge_indices or n2.index in merge_indices):
                     # Edge is selfloop or edge is between nodes to be merged
                     if n1.index == n2.index or (n1.index in merge_indices and n2.index in merge_indices):
-                        print('<=>', self.edges[n1.index][n2.index])
+                        #print('<=>', self.edges[n1.index][n2.index])
                         self.add_edges(new_node, new_node, self.edges[n1.index][n2.index])
                     # Edge is *from* nodes to be merged
                     elif n1.index in merge_indices:
-                        print('<=', self.edges[n1.index][n2.index])
+                        #print('<=', self.edges[n1.index][n2.index])
                         self.add_edges(new_node, n2, self.edges[n1.index][n2.index])
                     # Edge is *to* nodes to be merged
                     elif n2.index in merge_indices:
-                        print('=>', self.edges[n1.index][n2.index])
+                        #print('=>', self.edges[n1.index][n2.index])
                         self.add_edges(n1, new_node, self.edges[n1.index][n2.index])
                     # Delete old edge
                     self.edges[n1.index][n2.index] = []
@@ -156,7 +155,7 @@ class Automaton:
         """
         Replaces the current edges matrix with one twice as large.
         """
-        print(f'Expanding E matrix from {self.esize} to {self.esize*2}')
+        #print(f'Expanding E matrix from {self.esize} to {self.esize*2}')
         self.esize *= 2
         new_edges = [[self.edges[i][j] if i <= self.node_index and j <= self.node_index else [] \
             for i in range(self.esize)] for j in range(self.esize)]
@@ -227,19 +226,3 @@ class Node:
     def __str__(self):
         return f'NODE: ("{self.index}"), Initial: {self.is_initial} Final: {self.is_final}'
 
-
-if __name__ == '__main__':
-    A = Automaton()
-    n0 = A.add_node()
-    n1 = A.add_node()
-    n2 = A.add_node(is_final=True)
-    n3 = A.add_node(is_final=True)
-    A.add_edge( A.root, n1, '0')
-    A.add_edge( n1, n2, '0')
-    A.add_edge( n1, n3, '1')
-    A.add_edge( n3, n3, '2')
-    print('Generated example Automaton')
-    A.show(title='Example Automaton')
-    A.merge_nodes([n2, n3])
-    print('Merged nodes n2 and n3')
-    A.show(title='Merged n2 and n3')

@@ -1,5 +1,4 @@
 
-
 class NestedRE():
     """
     Nested Regular expression. The goal is to simplify Regex patterns by
@@ -85,7 +84,7 @@ class NestedRE():
         A = self.make_flat()
         B = other.make_flat()
 
-        print('JI, A=', A, 'B=', B)
+        #print('JI, A=', A, 'B=', B)
 
         if A == B and A !='ϵ':
             return self.merge_by_intersection(A, [self.closure, other.closure])

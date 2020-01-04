@@ -63,7 +63,7 @@ class A0Learner:
         # Merge non-deterministic transitions
         self.merge_nd_edges()
         if verbose:
-            self.A.show(title='Automaton with merged transitions')
+            self.A.show(title='Automaton with merged non-deterministic transitions')
 
 
     def construct_prefix_tree(self):
@@ -73,9 +73,6 @@ class A0Learner:
         we keep track of the previous path and add new labels for the next strings
         only continuing from the longest matching point.
         """
-
-        if self.verbose:
-            print(f'Constructing Prefix tree from S={self.S}')
 
         # List of label-node tuples, used to keep track the previous path.
         # (This guarantees we will not create duplicate paths, since the list of
@@ -162,19 +159,3 @@ class A0Learner:
 
     def get_automaton(self):
         return self.A
-
-
-if __name__ == '__main__':
-    S = ['ab', 'aab', 'aaaab']
-    A = Automaton()
-    L = A0Learner(S, A)
-    L.learn(verbose=True)
-
-    A = L.get_automaton()
-    #A.show('zero-reversible automaton')
-    P = REParser(A)
-    e = P.parse(verbose=True)
-    print('Final Expression: ', '|'.join(e))
-
-    A = P.get_automaton()
-    A.show()

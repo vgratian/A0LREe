@@ -1,4 +1,5 @@
 
+from automaton import Automaton, Node
 from nested_re import NestedRE
 
 class REParser():
@@ -43,9 +44,9 @@ class REParser():
 
         # Requirement of the SE algorithm, automaton should be uniform
         if not self.is_uniform():
-            print('Converting to uniform Automaton')
             self.make_uniform()
             if verbose:
+                print('Converted to uniform Automaton')
                 self.A.show('Uniform 0-Automaton')
         
         # List nodes to be eliminated, ignore initial and final states
@@ -60,7 +61,7 @@ class REParser():
             # DEBUG
             i+=1
             if verbose:
-                print(f'Loop={i}, N={len(nodes)}, Eliminatin k={k}')
+                print(f'Loop={i}, N={len(nodes)}, Eliminating Node k={k.index}')
                 self.A.show(f'i={i}')
 
             for n1 in list(self.A.nodes):
@@ -131,6 +132,24 @@ class REParser():
 
 
     def derive_pattern(self, s, t, k):
+        """
+        Find a label for the edge between the nodes s (source) and t (target) after
+        node k is eliminated. The basic idea is to take the untion of two possible
+        paths:
+            L:  direct path between s and t (if there is such)
+            R:  indirect path between s and t through k (if exists)
+        So the derived pattern is (L|R).
+
+        args:
+            s       source, Node instance
+            t       target, Node instance
+            k       eliminated node, Node instance
+
+        returns:
+            P       string, if new edge between s and t is possible,
+                    None otherwise.
+
+        """
 
         s2t = NestedRE( '|'.join(self.A.edges[s.index][t.index]) )
         s2k = NestedRE( '|'.join(self.A.edges[s.index][k.index]) )
@@ -177,7 +196,7 @@ class REParser():
 
         if self.verbose:
             print('[P=L|R]: ', P)
-            
+
         return str(P) if P else None
 
 
