@@ -14,6 +14,14 @@
 
 This implementation only serves as a proof-of-concept and has some serious drawbacks. For a detailed description see the accompanying [paper](Learning_FSAs_and_REs_from_examples.pdf). For an illustration of the workflow, see below.
 
+
+## Modules ##
+* `automaton.py` - Automaton and Node classes, used by other modules
+* `a0_learner.py` - Constructs an Automaton instance from input
+* `re_parser.py` - Extracts a Regular Expression with the State Elimination Algorithm
+* `nested_re.py` - NestedRE class, used to efficiently merge expressions during extraction (partially completed)
+* `a0lree.py` - Provides user interface
+ 
 ## Requirements ##
 
 - Python 3
