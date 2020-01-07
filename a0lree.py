@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import sys
 from a0_learner import A0Learner
@@ -22,29 +23,35 @@ if len(sys.argv) < 2 or '-h' in sys.argv or '--help' in sys.argv:
     Arguments:
         -h              print this message
         -v              draw graphs and print debugging info
-        filepath        expected as last argument, file with list of examples:
+        -c              read list of examples from stdin
+        <filepath>      read list of examples from file (incompatible with -c),
+                        expected as last argument and:
                             - each line should contain one example,
                             - empty line means empty string is accepted,
                             - no seperator symbols.
 
     Example:
-        main.py -v example.txt
+        ./a0lree.py -v example.txt
+        ./a0lree.py -v -c b ab aab aaab
     """)
     sys.exit(0)
 
 verbose = True if '-v' in sys.argv else False
 
 # Try to open file with examples
-fp = sys.argv[-1]
-if fp[0] == '-':
-    print('Missing argument: filepath. Exiting')
-    sys.exit(0)
-try:
-    S = open(fp).read().split()
-except (OSError) as ex:
-    print(ex)
-    print('Unable to read file [{}]. Exiting.'.format(fp))
-    sys.exit(1)
+if '-c' not in sys.argv:
+    fp = sys.argv[-1]
+    if fp[0] == '-':
+        print('Missing argument: filepath. Exiting')
+        sys.exit(0)
+    try:
+        S = open(fp).read().split()
+    except (OSError) as ex:
+        print(ex)
+        print('Unable to read file [{}]. Exiting.'.format(fp))
+        sys.exit(1)
+else:
+    S = [s for s in sys.argv[1:] if s[0] != '-']
 
 # Stage 1, contruct prefix tree and 0-reversible automaton
 
@@ -59,4 +66,6 @@ P = REParser(A)
 if verbose:
     print('Extracting regular expression from automaton.')
 e = P.parse(verbose)
-print('Final Expression: [{}]'.format('|'.join(e)))
+if verbose:
+    print('Final Expression: ', end='')
+print('|'.join(e))

@@ -62,7 +62,6 @@ class REParser():
             i+=1
             if verbose:
                 print(f'Loop={i}, N={len(nodes)}, Eliminating Node k={k.index}')
-                self.A.show(f'i={i}')
 
             for n1 in list(self.A.nodes):
                 for n2 in list(self.A.nodes):
@@ -74,6 +73,8 @@ class REParser():
             self.A.delete_node(k)
             self.A.edges = new_edges
 
+            if verbose:
+                self.A.show(f'i={i}')
 
         final_edge = self.A.edges[self.A.root.index][self.A.accepting_nodes[0].index]
 
